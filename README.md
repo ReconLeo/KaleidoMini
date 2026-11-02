@@ -192,8 +192,9 @@ $env:PYTHONHOME=''; $env:PYTHONPATH=''
 D:\anaconda3\python.exe -X utf8 tests\run_all.py
 ```
 
-> ⚠️ `package.py pack` 与 `install_plugin.py backend` 在目标已存在时会**交互式提问**，
-> 脚本化时需先删除旧产物并加 `--update`（详见 `docs/框架协调清单.md` FTK-KM-03）。
+> 提示：重复打包请加 `-y`（`package.py pack ... -y` 跳过覆写确认）；
+> 覆盖安装请加 `--update`（`install_plugin.py backend ... --update`），
+> 否则会明确报错提示插件已存在。
 
 ## 加密与密钥
 
