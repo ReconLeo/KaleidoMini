@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}" data-theme-init="{{ theme_effective }}" data-themes='{{ available_themes|tojson }}'>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>练习 · {{ bank_title }} - {{ title }}</title>
+    <link rel="stylesheet" href="/static/css/theme.css">
+    <link rel="stylesheet" href="/plugin-static/{{ name }}/css/km.css">
+    <script src="/static/js/theme.js"></script>
+    <script src="/static/js/plugin_common.js"></script>
+</head>
+<body class="km-page km-exam"
+      data-api-base="{{ api_base }}"
+      data-subject="{{ subject }}"
+      data-filename="{{ filename }}"
+      data-bank-title="{{ bank_title }}"
+      data-item-count="{{ item_count }}"
+      data-media-missing="{{ media_missing_count }}"
+      data-detail-url="{{ detail_url }}">
+
+<header class="km-header km-exam-head">
+    <div class="km-brand">
+        <p class="km-crumb"><a href="{{ detail_url }}">← 返回题库</a></p>
+        <h1>{{ bank_title }}</h1>
+        <p class="km-muted">
+            {{ subject }} / {{ filename }}
+            {%- if bank_format %} · v{{ bank_format }}{% endif %}
+            {%- if bank_author %} · {{ bank_author }}{% endif %}
+            · {{ chapter_count }} 章 / {{ item_count }} 条
+            {%- if media_missing_count %} · <span class="km-warn">缺 {{ media_missing_count }} 个媒体</span>{% endif %}
+        </p>
+    </div>
+    <nav class="km-actions km-exam-actions" id="km-exam-actions" hidden>
+        <button type="button" class="km-btn" data-act="toggle-answers" id="km-toggle-answers"
+                aria-pressed="false">显示答案</button>
+        <button type="button" class="km-btn" data-act="sheet">答题卡</button>
+        <button type="button" class="km-btn km-btn-primary" data-act="finish">结束并汇总</button>
+    </nav>
+</header>
+
+<!-- ==================== 开始面板 ==================== -->
+<section class="km-card km-start" id="km-start">
+    <h2>开始练习</h2>
+    <p class="km-muted km-small">
+        练习模式：逐题作答，可随时看答案；作答结果在服务端判分（前端不重复实现规则）。
+        答案与解析不在初始载荷中下发，点「提交」或「看答案」时才按题获取。
+    </p>
+
+    <div class="km-start-grid">
+        <div>
+            <h3>章节范围</h3>
+            <div class="km-chapter-pick" id="km-chapter-pick">
+                <label class="km-check">
+                    <input type="checkbox" id="km-chapter-all" checked>
+                    <span>全部章节（{{ item_count }} 条）</span>
+                </label>
+                {% for ch in chapters %}
+                <label class="km-check km-sub">
+                    <input type="checkbox" class="km-chapter-box" value="{{ ch.chapter_id }}">
+                    <span>{{ ch.chapter_name }}
+                        <span class="km-muted km-small">（{{ ch.item_count }} 条）</span>
+                    </span>
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+        <div>
+            <h3>题目顺序</h3>
+            <div class="km-order-pick">
+                <label class="km-check"><input type="radio" name="km-order" value="seq" checked> <span>按原顺序</span></label>
+                <label class="km-check"><input type="radio" name="km-order" value="shuffle"> <span>乱序（同组复合题保持相邻）</span></label>
+            </div>
+            <h3>选项</h3>
+            <div class="km-order-pick">
+                <label class="km-check">
+                    <input type="checkbox" id="km-shuffle-options" checked>
+                    <span>随机化选项顺序</span>
+                </label>
+                <p class="km-muted km-small" style="margin:0">
+                    每题选项每次重新排序并重标号为 A/B/C…，防止靠位置或字母记住答案。
+                    判分与错题导出始终使用题库原有顺序与字母。
+                </p>
+            </div>
+            <h3>题型分布</h3>
+            <ul class="km-chips">
+                {% for qtype, count in type_counts.items() %}
+                <li class="km-chip"><code>{{ qtype }}</code> × {{ count }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <div class="km-dialog-actions km-start-actions">
+        <button type="button" class="km-btn" data-act="resume" id="km-resume" hidden>继续上次进度</button>
+        <button type="button" class="km-btn km-btn-primary" data-act="start">开始练习</button>
+    </div>
+</section>
+
+<!-- ==================== 练习主体 ==================== -->
+<main class="km-main km-session" id="km-session" hidden>
+    <div class="km-progress">
+        <div class="km-progress-bar" id="km-progress-bar"></div>
+        <div class="km-progress-meta">
+            <span id="km-progress-text">0 / 0</span>
+            <span class="km-muted km-small" id="km-progress-stat"></span>
+        </div>
+    </div>
+
+    <article class="km-card km-question" id="km-question">
+        <p class="km-q-meta" id="km-q-meta"></p>
+        <div class="km-shared-stem" id="km-q-shared" hidden></div>
+        <div class="km-stem" id="km-q-stem"></div>
+        <div class="km-answers" id="km-q-answers"></div>
+
+        <div class="km-q-actions">
+            <button type="button" class="km-btn km-btn-primary" data-act="submit" id="km-submit">提交</button>
+            <button type="button" class="km-btn" data-act="reveal" id="km-reveal">看答案</button>
+            <button type="button" class="km-btn" data-act="skip" id="km-skip">跳过</button>
+            <span class="km-spacer"></span>
+            <button type="button" class="km-btn" data-act="prev" id="km-prev">上一题</button>
+            <button type="button" class="km-btn" data-act="next" id="km-next">下一题</button>
+        </div>
+
+        <div class="km-result" id="km-result" hidden></div>
+    </article>
+
+    <p class="km-muted km-small km-hint">
+        快捷键：<code>A</code>–<code>Z</code> 选择（选项超过 26 个时其后请直接点击）·
+        <code>Enter</code> 提交 · <code>←</code> <code>→</code> 切题 · <code>Esc</code> 关闭抽屉
+    </p>
+</main>
+
+<!-- ==================== 答题卡抽屉 ==================== -->
+<aside class="km-drawer" id="km-sheet" hidden aria-label="答题卡">
+    <div class="km-drawer-head">
+        <h2>答题卡</h2>
+        <button type="button" class="km-btn" data-act="close-sheet">关闭</button>
+    </div>
+    <div class="km-legend">
+        <span class="km-legend-item"><i class="km-dot km-dot-none"></i>未作答</span>
+        <span class="km-legend-item"><i class="km-dot km-dot-ok"></i>正确</span>
+        <span class="km-legend-item"><i class="km-dot km-dot-bad"></i>错误</span>
+        <span class="km-legend-item"><i class="km-dot km-dot-seen"></i>已看答案</span>
+        <span class="km-legend-item"><i class="km-dot km-dot-manual"></i>待自评</span>
+    </div>
+    <div class="km-sheet-grid" id="km-sheet-grid"></div>
+</aside>
+
+<!-- ==================== 汇总抽屉 ==================== -->
+<aside class="km-drawer km-drawer-wide" id="km-summary" hidden aria-label="练习汇总">
+    <div class="km-drawer-head">
+        <h2>练习汇总</h2>
+        <button type="button" class="km-btn" data-act="close-summary">关闭</button>
+    </div>
+    <div id="km-summary-body"></div>
+</aside>
+
+<div class="km-toast" id="km-toast" hidden></div>
+
+<script src="/plugin-static/{{ name }}/js/km_common.js"></script>
+<script src="/plugin-static/{{ name }}/js/km_exam.js"></script>
+</body>
+</html>

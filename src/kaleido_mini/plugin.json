@@ -1,0 +1,13 @@
+{
+  "name": "kaleido_mini",
+  "title": "Kaleido Mini 题库自测",
+  "version": "0.3.0",
+  "author": "Kaleido",
+  "category": "学习工具",
+  "description": "只读题库 + 练习模式自测：学科文件夹管理、单题库上传/删除、.kqb 整包导入（含加密媒体）、逐题练习、答案显隐、错题汇总导出、DeepSeek 智能评卷。",
+  "permission": "user",
+  "require_framework_version": "4.21.0",
+  "capabilities": [
+    "network:http:https://api.deepseek.com/*"
+  ]
+}

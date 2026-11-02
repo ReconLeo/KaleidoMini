@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}" data-theme-init="{{ theme_effective }}" data-themes='{{ available_themes|tojson }}'>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <link rel="stylesheet" href="/static/css/theme.css">
+    <link rel="stylesheet" href="/plugin-static/{{ name }}/css/km.css">
+    <script src="/static/js/theme.js"></script>
+    <script src="/static/js/plugin_common.js"></script>
+</head>
+<body class="km-page"
+      data-api-base="{{ api_base }}"
+      data-is-admin="{{ '1' if is_admin else '0' }}"
+      data-media-exts='{{ media_exts|tojson }}'
+      data-max-upload-mb="{{ max_upload_mb }}"
+      data-upload-types='{{ allowed_upload_types|tojson }}'>
+
+<header class="km-header">
+    <div class="km-brand">
+        <h1>{{ title }}</h1>
+        <p class="km-muted">
+            v{{ version }} · 角色 <code>{{ role }}</code>
+            {%- if not crypto_available %} · <span class="km-bad">缺少 cryptography，加密功能不可用</span>
+            {%- elif not has_key %} · <span class="km-warn">未配置密钥文件（加密题库暂不可读）</span>
+            {%- endif %}
+        </p>
+    </div>
+    <nav class="km-actions">
+        {% if is_admin %}
+        <button class="km-btn km-btn-primary" data-act="new-subject">新建学科</button>
+        <button class="km-btn" data-act="upload-json">上传题库 JSON</button>
+        <button class="km-btn" data-act="import-kqb">导入 .kqb 整包</button>
+        <a class="km-btn" href="/plugin/{{ name }}/settings">设置</a>
+        {% endif %}
+        <button class="km-btn" data-act="reload">刷新</button>
+    </nav>
+</header>
+
+<section class="km-stats">
+    <div class="km-stat"><b>{{ summary['subject_count'] }}</b><span>学科</span></div>
+    <div class="km-stat"><b>{{ summary['bank_count'] }}</b><span>题库</span></div>
+    <div class="km-stat"><b>{{ summary['item_count'] }}</b><span>可练习题</span></div>
+    <div class="km-stat"><b>{{ summary['media_count'] }}</b><span>媒体文件</span></div>
+    <div class="km-stat {% if summary['media_missing_count'] %}km-stat-warn{% endif %}">
+        <b>{{ summary['media_missing_count'] }}</b><span>缺失媒体引用</span>
+    </div>
+</section>
+
+{% if not is_admin %}
+<p class="km-notice">当前为普通用户：可浏览题库并进入练习，上传/导入/删除需管理员权限。</p>
+{% endif %}
+
+<main class="km-main">
+{% if not subjects %}
+    <div class="km-card km-empty">
+        <p>还没有任何学科。</p>
+        {% if is_admin %}
+        <p class="km-muted">点击右上角「新建学科」→ 再「上传题库 JSON」或「导入 .kqb 整包」。</p>
+        {% else %}
+        <p class="km-muted">请联系管理员配置题库。</p>
+        {% endif %}
+    </div>
+{% endif %}
+
+{% for subj in subjects %}
+    <section class="km-card km-subject" data-subject="{{ subj.name }}">
+        <div class="km-subject-head">
+            <h2>{{ subj.name }}</h2>
+            <span class="km-muted">
+                {{ subj.bank_count }} 个题库 · {{ subj.item_count }} 条题 · {{ subj.media_count }} 个媒体
+            </span>
+            <span class="km-spacer"></span>
+            {% if is_admin %}
+            <button class="km-btn km-btn-danger" data-act="delete-subject"
+                    data-subject="{{ subj.name }}">删除学科</button>
+            {% endif %}
+        </div>
+
+        {% if subj.banks %}
+        <div class="km-table-wrap">
+        <table class="km-table">
+            <thead>
+                <tr>
+                    <th>题库</th>
+                    <th>格式</th>
+                    <th>章节 / 条目</th>
+                    <th>媒体</th>
+                    <th class="km-col-ops">操作</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for b in subj.banks %}
+                <tr data-filename="{{ b.filename }}">
+                    <td>
+                        <strong>{{ b.title or b.stem }}</strong>
+                        <div class="km-muted km-small">
+                            {{ b.author or '未标注作者' }}
+                            {%- if b.encrypted %} · <span class="km-tag">加密</span>{% endif %}
+                            {%- if not b.ok %} · <span class="km-bad">结构异常{% if b.error %}：{{ b.error }}{% endif %}</span>{% endif %}
+                        </div>
+                    </td>
+                    <td class="km-nowrap">
+                        {% if b.format_version %}v{{ b.format_version|join('.') }}{% else %}—{% endif %}
+                    </td>
+                    <td class="km-nowrap">{{ b.chapter_count }} 章 / {{ b.item_count }} 条</td>
+                    <td class="km-nowrap">
+                        {{ b.media_count }} 个
+                        {%- if b.media_missing_count %}
+                            <span class="km-warn">· 缺 {{ b.media_missing_count }}</span>
+                        {%- endif %}
+                    </td>
+                    <td class="km-col-ops">
+                        <a class="km-btn km-btn-primary" href="{{ b.exam_url }}">练习</a>
+                        <a class="km-btn" href="{{ b.detail_url }}">详情</a>
+                        {% if is_admin %}
+                        <button class="km-btn km-btn-danger" data-act="delete-bank"
+                                data-subject="{{ subj.name }}"
+                                data-filename="{{ b.filename }}">删除</button>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        </div>
+        {% else %}
+        <p class="km-muted km-pad">该学科下暂无题库。</p>
+        {% endif %}
+    </section>
+{% endfor %}
+</main>
+
+<!-- ============ 新建学科 ============ -->
+<dialog class="km-dialog" id="dlg-subject">
+    <form method="dialog" class="km-form">
+        <h3>新建学科</h3>
+        <label>学科名称
+            <input type="text" name="name" placeholder="例如：眼科学" required>
+        </label>
+        <p class="km-muted km-small">名称会作为磁盘目录名，不能含 <code>/ \ : * ? " &lt; &gt; |</code>。</p>
+        <div class="km-dialog-actions">
+            <button type="button" class="km-btn" data-role="cancel">取消</button>
+            <button type="submit" class="km-btn km-btn-primary" data-role="submit">创建</button>
+        </div>
+    </form>
+</dialog>
+
+<!-- ============ 上传题库 JSON ============ -->
+<dialog class="km-dialog" id="dlg-upload">
+    <form method="dialog" class="km-form">
+        <h3>上传题库 JSON</h3>
+        <label>目标学科
+            <select name="subject" required>
+                <option value="">请选择学科…</option>
+                {% for subj in subjects %}
+                <option value="{{ subj.name }}">{{ subj.name }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label>题库文件（.json，≤ {{ max_upload_mb }}MB）
+            <input type="file" name="file" accept=".json,application/json" required>
+        </label>
+        <label class="km-check">
+            <input type="checkbox" name="overwrite" value="1">
+            同名题库已存在时覆盖
+        </label>
+        <p class="km-muted km-small">
+            支持 v1 / v2 / v3 / v3.1.0。若上传的是加密题库，需要已配置密钥文件。
+            含媒体的题库请改用「导入 .kqb 整包」。
+        </p>
+        <div class="km-dialog-actions">
+            <button type="button" class="km-btn" data-role="cancel">取消</button>
+            <button type="submit" class="km-btn km-btn-primary" data-role="submit">上传</button>
+        </div>
+    </form>
+</dialog>
+
+<!-- ============ 导入 .kqb 整包 ============ -->
+<dialog class="km-dialog km-dialog-wide" id="dlg-kqb">
+    <form method="dialog" class="km-form">
+        <h3>导入 .kqb 整包</h3>
+        <label>目标学科
+            <select name="subject" required>
+                <option value="">请选择学科…</option>
+                {% for subj in subjects %}
+                <option value="{{ subj.name }}">{{ subj.name }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label>整包文件（.kqb / .zip，≤ {{ max_upload_mb }}MB）
+            <input type="file" name="file" accept=".kqb,.zip" required>
+        </label>
+        <label class="km-check">
+            <input type="checkbox" name="overwrite" value="1">
+            同名题库已存在时覆盖
+        </label>
+        <div class="km-inspect-result" id="kqb-inspect" hidden></div>
+        <p class="km-muted km-small">
+            导入前会先做完整性核对（路径安全 / 摘要 / 签名 / 媒体 MAC），
+            不通过则不会写入任何文件。加密包需密钥文件 —— 若包内自带密钥则可直接导入。
+        </p>
+        <div class="km-dialog-actions">
+            <button type="button" class="km-btn" data-role="cancel">取消</button>
+            <button type="button" class="km-btn" data-role="inspect">先核对</button>
+            <button type="submit" class="km-btn km-btn-primary" data-role="submit">导入</button>
+        </div>
+    </form>
+</dialog>
+
+<div class="km-toast" id="km-toast" hidden></div>
+
+<script src="/plugin-static/{{ name }}/js/km_common.js"></script>
+<script src="/plugin-static/{{ name }}/js/km_index.js"></script>
+</body>
+</html>

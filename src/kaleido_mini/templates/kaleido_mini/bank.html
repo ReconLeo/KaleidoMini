@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}" data-theme-init="{{ theme_effective }}" data-themes='{{ available_themes|tojson }}'>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ detail.summary.title or detail.stem }} - {{ title }}</title>
+    <link rel="stylesheet" href="/static/css/theme.css">
+    <link rel="stylesheet" href="/plugin-static/{{ name }}/css/km.css">
+    <script src="/static/js/theme.js"></script>
+    <script src="/static/js/plugin_common.js"></script>
+</head>
+<body class="km-page" data-api-base="{{ api_base }}" data-is-admin="{{ '1' if is_admin else '0' }}">
+
+<header class="km-header">
+    <div class="km-brand">
+        <p class="km-crumb"><a href="/plugin/{{ name }}">← 返回题库列表</a></p>
+        <h1>{{ detail.summary.title or detail.stem }}</h1>
+        <p class="km-muted">
+            {{ detail.subject }} / {{ detail.filename }}
+            {%- if detail.summary.format_version %} · v{{ detail.summary.format_version|join('.') }}{% endif %}
+            {%- if detail.summary.author %} · {{ detail.summary.author }}{% endif %}
+            {%- if detail.summary.encrypted %} · <span class="km-tag">包内加密</span>{% endif %}
+        </p>
+    </div>
+</header>
+
+{% if detail.summary.description %}
+<p class="km-notice">{{ detail.summary.description }}</p>
+{% endif %}
+
+<section class="km-stats">
+    <div class="km-stat"><b>{{ detail.summary.chapter_count }}</b><span>章节</span></div>
+    <div class="km-stat"><b>{{ detail.summary.item_count }}</b><span>可练习题</span></div>
+    <div class="km-stat"><b>{{ detail.media.present_count }}</b><span>媒体文件</span></div>
+    <div class="km-stat {% if detail.media.missing_count %}km-stat-warn{% endif %}">
+        <b>{{ detail.media.missing_count }}</b><span>缺失媒体</span>
+    </div>
+    <div class="km-stat"><b>{{ detail.summary.type_counts|length }}</b><span>题型种类</span></div>
+</section>
+
+<main class="km-main">
+
+    <!-- ================= 题型分布 ================= -->
+    <section class="km-card">
+        <h2>题型分布</h2>
+        {% if detail.summary.type_counts %}
+        <ul class="km-chips">
+            {% for qtype, count in detail.summary.type_counts.items() %}
+            <li class="km-chip"><code>{{ qtype }}</code> × {{ count }}</li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="km-muted">无题型统计。</p>
+        {% endif %}
+        {% if detail.summary.display_counts %}
+        <p class="km-muted km-small">
+            控件形态：
+            {% for dt, count in detail.summary.display_counts.items() %}{{ dt }} × {{ count }}{% if not loop.last %} · {% endif %}{% endfor %}
+        </p>
+        {% endif %}
+        {% if detail.summary.warnings %}
+        <details class="km-details">
+            <summary>解析告警 {{ detail.summary.warnings|length }} 条</summary>
+            <ul class="km-list km-small">
+                {% for w in detail.summary.warnings %}<li>{{ w }}</li>{% endfor %}
+            </ul>
+        </details>
+        {% endif %}
+    </section>
+
+    <!-- ================= 章节 ================= -->
+    <section class="km-card">
+        <h2>章节</h2>
+        {% if detail.chapters %}
+        <table class="km-table">
+            <thead><tr><th>章节</th><th>条目</th><th>题型</th></tr></thead>
+            <tbody>
+            {% for ch in detail.chapters %}
+                <tr>
+                    <td>{{ ch.chapter_name }}</td>
+                    <td class="km-nowrap">{{ ch.item_count }}</td>
+                    <td class="km-small">
+                        {% for qtype, count in ch.type_counts.items() %}{{ qtype }} × {{ count }}{% if not loop.last %} · {% endif %}{% endfor %}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="km-muted">无章节信息。</p>
+        {% endif %}
+    </section>
+
+    <!-- ================= 媒体自检 ================= -->
+    <section class="km-card">
+        <h2>媒体自检</h2>
+        <p class="km-muted km-small">
+            题库引用 <b>{{ detail.summary.media_ref_count|default(0) }}</b> 个媒体，
+            目录 <code>{{ detail.media.dir }}/</code> 实际有 <b>{{ detail.media.present_count }}</b> 个文件。
+        </p>
+
+        {% if detail.media.missing_count %}
+        <div class="km-alert km-alert-warn">
+            <p><b>缺失 {{ detail.media.missing_count }} 个引用</b>（练习时会显示为占位）：</p>
+            <ul class="km-list km-small">
+                {% for m in detail.media.missing[:40] %}<li><code>{{ m }}</code></li>{% endfor %}
+                {% if detail.media.missing_count > 40 %}<li>… 其余 {{ detail.media.missing_count - 40 }} 个</li>{% endif %}
+            </ul>
+        </div>
+        {% endif %}
+
+        {% if detail.media.fallback %}
+        <div class="km-alert km-alert-info">
+            <p><b>{{ detail.media.fallback|length }} 个引用经扩展名回退命中</b>（引用名 → 实际文件）：</p>
+            <ul class="km-list km-small">
+                {% for ref, actual in detail.media.fallback.items() %}
+                <li><code>{{ ref }}</code> → <code>{{ actual }}</code></li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        {% if detail.media.unreferenced_count %}
+        <details class="km-details">
+            <summary>目录中 {{ detail.media.unreferenced_count }} 个文件未被题库引用</summary>
+            <ul class="km-list km-small">
+                {% for m in detail.media.unreferenced[:40] %}<li><code>{{ m }}</code></li>{% endfor %}
+            </ul>
+        </details>
+        {% endif %}
+
+        {% if not detail.media.missing_count and not detail.media.fallback and not detail.media.unreferenced_count %}
+        <p class="km-ok">✓ 媒体引用与文件完全一致。</p>
+        {% endif %}
+    </section>
+
+    <!-- ================= 溯源（管理员） ================= -->
+    {% if is_admin and detail.provenance %}
+    <section class="km-card">
+        <h2>导入溯源</h2>
+        <table class="km-table km-small">
+            <tbody>
+            {% for key, value in detail.provenance.items() if key not in ('checks', 'warnings') %}
+                <tr><th class="km-th-key">{{ key }}</th><td>{{ value }}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% if detail.provenance.warnings %}
+        <details class="km-details">
+            <summary>导入时告警 {{ detail.provenance.warnings|length }} 条</summary>
+            <ul class="km-list km-small">
+                {% for w in detail.provenance.warnings %}<li>[{{ w.id }}] {{ w.title }}：{{ w.detail }}</li>{% endfor %}
+            </ul>
+        </details>
+        {% endif %}
+    </section>
+    {% endif %}
+
+    <!-- ================= 题目预览（服务端安全渲染） ================= -->
+    <section class="km-card">
+        <h2>题目预览 <span class="km-muted km-small">（前 {{ previews|length }} 题，HTML 已经白名单净化）</span></h2>
+        {% if previews %}
+            {% for pv in previews %}
+            <article class="km-preview">
+                <p class="km-preview-head">
+                    <span class="km-tag">{{ pv.type_label }}</span>
+                    <span class="km-muted km-small">{{ pv.chapter_name }}</span>
+                    {% if pv.group_size > 1 %}
+                    <span class="km-tag">共用题干组 {{ pv.group_index }}/{{ pv.group_size }}</span>
+                    {% endif %}
+                    <span class="km-muted km-small">{{ pv.item_id }}</span>
+                </p>
+                {% if pv.shared_stem_html %}
+                <div class="km-shared-stem">{{ pv.shared_stem_html|safe }}</div>
+                {% endif %}
+                <div class="km-stem">{{ pv.stem_html|safe }}</div>
+                {% if pv.options_html %}
+                <ol class="km-options">
+                    {% for key, html in pv.options_html.items() %}
+                    <li><span class="km-opt-key">{{ key }}</span><span class="km-opt-text">{{ html|safe }}</span></li>
+                    {% endfor %}
+                </ol>
+                {% endif %}
+                <p class="km-muted km-small">
+                    正确答案：{% for c in pv.correct %}<code>{{ c }}</code>{% if not loop.last %} {% endif %}{% endfor %}
+                </p>
+                {% if pv.missing_media %}
+                <p class="km-warn km-small">含缺失媒体：{% for m in pv.missing_media %}<code>{{ m }}</code> {% endfor %}</p>
+                {% endif %}
+            </article>
+            {% endfor %}
+        {% else %}
+        <p class="km-muted">无可预览题目。</p>
+        {% endif %}
+    </section>
+
+    <section class="km-card">
+        <h2>开始练习</h2>
+        <p class="km-muted km-small">
+            逐题作答 · 答案显隐 · 答题卡 · 错题汇总。判分在服务端完成，答案不随初始载荷下发。
+        </p>
+        <div class="km-dialog-actions" style="justify-content:flex-start">
+            <a class="km-btn km-btn-primary" href="{{ exam_url }}">开始练习（{{ detail.summary.item_count }} 题）</a>
+        </div>
+    </section>
+
+</main>
+
+<script src="/plugin-static/{{ name }}/js/km_common.js"></script>
+</body>
+</html>

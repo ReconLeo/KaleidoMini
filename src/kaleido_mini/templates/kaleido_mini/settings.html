@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}" data-theme-init="{{ theme_effective }}" data-themes='{{ available_themes|tojson }}'>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>设置 - {{ title }}</title>
+    <link rel="stylesheet" href="/static/css/theme.css">
+    <link rel="stylesheet" href="/plugin-static/{{ name }}/css/km.css">
+    <script src="/static/js/theme.js"></script>
+    <script src="/static/js/plugin_common.js"></script>
+</head>
+<body class="km-page" data-api-base="{{ api_base }}" data-is-admin="{{ '1' if is_admin else '0' }}"
+      data-key-configured="{{ '1' if settings.key.configured else '0' }}"
+      data-ai-configured="{{ '1' if settings.deepseek.configured else '0' }}">
+
+<header class="km-header">
+    <div class="km-brand">
+        <p class="km-crumb"><a href="{{ page_base }}">← 返回题库列表</a></p>
+        <h1>设置</h1>
+        <p class="km-muted">v{{ version }} · 仅管理员可见 · 密钥与 AI 配置均只存于本机</p>
+    </div>
+</header>
+
+<main class="km-main">
+
+    <!-- ==================== 全题库密钥文件 ==================== -->
+    <section class="km-card" id="km-sec-key">
+        <h2>全题库密钥文件</h2>
+        <p class="km-muted km-small">
+            `key_obj.json` 是 <b>母密钥</b>：用于解开加密题库/加密 `.kqb` 包、为导出题库签名。
+            它既能解密题库，也能解出本框架的登录凭据配置 —— 请勿外传，并务必单独备份。
+        </p>
+
+        <div class="km-stats km-stats-inline">
+            <div class="km-stat">
+                <b id="km-key-state">{{ '已配置' if settings.key.configured else '未配置' }}</b>
+                <span>状态</span>
+            </div>
+            <div class="km-stat">
+                <b id="km-key-fp">{{ settings.key.fingerprint_short or '—' }}</b>
+                <span>公钥指纹</span>
+            </div>
+            <div class="km-stat">
+                <b id="km-key-bits">{{ settings.key.rsa_bits or '—' }}</b>
+                <span>RSA 位数</span>
+            </div>
+        </div>
+
+        <div class="km-dialog-actions km-actions-left">
+            <button type="button" class="km-btn" data-act="key-upload">导入已有密钥</button>
+            <button type="button" class="km-btn" data-act="key-generate">自动生成新密钥</button>
+            <button type="button" class="km-btn km-btn-danger" data-act="key-download"
+                    {% if not settings.key.configured %}disabled{% endif %}>下载密钥（备份）</button>
+            <input type="file" id="km-key-file" accept=".json,application/json" hidden>
+        </div>
+        <p class="km-muted km-small">
+            存储位置：<code>{{ settings.key.path }}</code> · 已配置密钥时，加密导出包可直接解开。
+        </p>
+    </section>
+
+    <!-- ==================== DeepSeek AI 评卷 ==================== -->
+    <section class="km-card" id="km-sec-ai">
+        <h2>DeepSeek 智能评卷</h2>
+        <p class="km-muted km-small">
+            用于<b>简答题与填空题</b>：把题干、参考答案与考生作答发给 DeepSeek 得到分数与点评。
+            用户自评始终保留，AI 只作参考，可一键覆盖。API Key 只存本机、只在服务端使用，
+            界面仅显示掩码。
+        </p>
+
+        <div class="km-form km-form-grid">
+            <label class="km-check">
+                <input type="checkbox" id="km-ai-enabled"
+                       {% if settings.deepseek.enabled %}checked{% endif %}>
+                <span>启用 AI 评卷</span>
+            </label>
+
+            <label>API Key
+                <input type="password" id="km-ai-key" autocomplete="off"
+                       placeholder="{% if settings.deepseek.configured %}{{ settings.deepseek.api_key_masked }}（留空则不修改）{% else %}sk-…{% endif %}">
+            </label>
+            <label class="km-check">
+                <input type="checkbox" id="km-ai-key-clear">
+                <span>清除已保存的 Key</span>
+            </label>
+
+            <label>模型
+                <input type="text" id="km-ai-model" value="{{ settings.deepseek.model }}">
+            </label>
+            <label>接口地址
+                <input type="text" id="km-ai-base" value="{{ settings.deepseek.base_url }}">
+            </label>
+            <label>超时（秒）
+                <input type="number" id="km-ai-timeout" min="5" max="120"
+                       value="{{ settings.deepseek.timeout }}">
+            </label>
+        </div>
+
+        <div class="km-dialog-actions km-actions-left">
+            <button type="button" class="km-btn" data-act="ai-test">测试连通性</button>
+            <span class="km-muted km-small" id="km-ai-test-result"></span>
+        </div>
+        <div class="km-inspect-result" id="km-ai-test-box" hidden></div>
+    </section>
+
+    <!-- ==================== 外链图片策略 ==================== -->
+    <section class="km-card">
+        <h2>外链图片策略</h2>
+        <label class="km-check">
+            <input type="checkbox" id="km-ext-media"
+                   {% if settings.allow_external_media %}checked{% endif %}>
+            <span>允许加载题库中的外部图片链接（<code>https://…</code>）</span>
+        </label>
+        <p class="km-muted km-small">
+            允许时图片会带 <code>referrerpolicy="no-referrer"</code> 加载以降低跟踪；
+            关闭后外链图片一律显示为占位，仅保留同源媒体与 base64 内联图。
+        </p>
+    </section>
+
+    <div class="km-dialog-actions km-save-bar">
+        <button type="button" class="km-btn km-btn-primary" id="km-save">保存设置</button>
+        <span class="km-muted km-small" id="km-save-hint"></span>
+    </div>
+
+    <section class="km-card km-placeholder">
+        <h2>系统信息</h2>
+        <table class="km-table km-small">
+            <tbody>
+            <tr><th class="km-th-key">插件版本</th><td>{{ version }}</td></tr>
+            <tr><th class="km-th-key">cryptography</th>
+                <td>{% if settings.crypto_available %}<span class="km-ok">可用</span>
+                    {% else %}<span class="km-bad">缺失：{{ settings.crypto_error }}</span>{% endif %}</td></tr>
+            <tr><th class="km-th-key">上传上限</th><td>{{ settings.limits.max_upload_mb }} MB</td></tr>
+            <tr><th class="km-th-key">允许上传类型</th>
+                <td>{{ settings.limits.allowed_upload_types|join(' · ') }}</td></tr>
+            <tr><th class="km-th-key">媒体扩展名</th>
+                <td class="km-small">{{ settings.limits.media_exts|join(' ') }}</td></tr>
+            </tbody>
+        </table>
+    </section>
+
+</main>
+
+<div class="km-toast" id="km-toast" hidden></div>
+
+<script src="/plugin-static/{{ name }}/js/km_common.js"></script>
+<script src="/plugin-static/{{ name }}/js/km_settings.js"></script>
+</body>
+</html>

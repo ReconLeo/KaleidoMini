@@ -1,0 +1,37 @@
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# ---- 构建产物 ----
+dist/
+build/
+*.spec
+
+# ---- 隔离测试运行时（勿入库，体积大）----
+.runtime/
+releases/
+
+# ---- 临时/草稿 ----
+_scratch/
+_tmp_*
+temp/
+
+# ---- 密钥：绝不入库（母密钥，可解登录凭据与全部加密题库）----
+key_obj.json
+*.key_obj.json
+*.key
+*.pem
+
+# ---- 导出的整包与错题本（可能含未脱敏题库内容）----
+*.kqb
+out/
+exports/
+
+# ---- 编辑器 ----
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db

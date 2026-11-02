@@ -1,0 +1,569 @@
+/* =============================================================================
+   Kaleido Mini —— 插件样式
+   变量优先复用框架 theme.css 的语义变量，缺失时用兜底值，保证深浅两色都可用。
+   ============================================================================= */
+
+.km-page {
+    --km-bg: var(--bg, #f6f7f9);
+    --km-card: var(--card-bg, #ffffff);
+    --km-border: var(--border, #e3e6ea);
+    --km-text: var(--text, #1f2328);
+    --km-muted: var(--text-muted, #6b7280);
+    --km-input: var(--input-bg, #ffffff);
+    --km-primary: var(--primary, #2563eb);
+    --km-primary-text: #ffffff;
+    --km-danger: var(--danger, #dc2626);
+    --km-warn: var(--warning, #d97706);
+    --km-ok: var(--success, #16a34a);
+    --km-radius: 10px;
+
+    margin: 0;
+    padding: 0 0 48px;
+    background: var(--km-bg);
+    color: var(--km-text);
+    font-family: system-ui, -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+:root[data-theme="dark"] .km-page {
+    --km-bg: var(--bg, #0f1115);
+    --km-card: var(--card-bg, #171a21);
+    --km-border: var(--border, #2a2f3a);
+    --km-text: var(--text, #e6e8ec);
+    --km-muted: var(--text-muted, #9aa3af);
+    --km-input: var(--input-bg, #11141a);
+}
+
+/* -----------------------------------------------------------------------------
+   链接默认色 —— 必须排除按钮形态的 <a class="km-btn">。
+   踩过的坑：`.km-page a`(0,1,1) 特指度高于 `.km-btn-primary`(0,1,0) 的
+   `color: var(--km-primary-text)`，于是蓝底按钮上的白字被改回蓝色 → 文字与背景同色看不见。
+   同类问题影响「列表页-练习按钮」「详情页-开始练习按钮」等所有 <a> 形态的按钮。
+   -------------------------------------------------------------------------- */
+.km-page a:not(.km-btn) { color: var(--km-primary); text-decoration: none; }
+.km-page a:not(.km-btn):hover { text-decoration: underline; }
+
+/* 按钮颜色用 .km-page 前缀提高特指度，无论 <a> 还是 <button> 形态都稳定生效 */
+.km-page .km-btn { color: var(--km-text); text-decoration: none; }
+.km-page .km-btn:hover { text-decoration: none; }
+.km-page .km-btn-primary { color: var(--km-primary-text); }
+.km-page .km-btn-danger { color: var(--km-danger); }
+.km-page .km-btn-primary:hover { color: var(--km-primary-text); }
+.km-page .km-btn-danger:hover { color: #fff; }
+
+/* -----------------------------------------------------------------------------
+   [hidden] 兜底（重要）
+   UA 样式表里 [hidden] 只是 display:none，而作者样式（.km-btn{display:inline-block}
+   / .km-drawer{position:fixed} 等）优先级更高，会把 hidden 元素重新显示出来。
+   实测后果：练习页在"开始练习"之前就把工具栏、练习主体、继续进度按钮全显示了。
+   用 !important 统一兜底，避免每个组件都要单独写 [hidden] 规则。
+   -------------------------------------------------------------------------- */
+.km-page [hidden] { display: none !important; }
+
+.km-page code {
+    background: color-mix(in srgb, var(--km-border) 45%, transparent);
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-size: 0.92em;
+}
+
+/* ---------------- 头部 ---------------- */
+.km-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 12px;
+    padding: 20px 24px 12px;
+    border-bottom: 1px solid var(--km-border);
+    background: var(--km-card);
+}
+.km-brand h1 { margin: 0; font-size: 20px; }
+.km-brand p { margin: 4px 0 0; }
+.km-crumb { margin: 0 0 6px; font-size: 13px; }
+.km-actions { margin-left: auto; display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* ---------------- 统计条 ---------------- */
+.km-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 14px 24px 0;
+}
+.km-stat {
+    flex: 1 1 110px;
+    min-width: 100px;
+    background: var(--km-card);
+    border: 1px solid var(--km-border);
+    border-radius: var(--km-radius);
+    padding: 10px 14px;
+}
+.km-stat b { display: block; font-size: 20px; }
+.km-stat span { color: var(--km-muted); font-size: 12px; }
+.km-stat-warn { border-color: var(--km-warn); }
+.km-stat-warn b { color: var(--km-warn); }
+
+/* ---------------- 主体 ---------------- */
+.km-main { padding: 16px 24px 0; display: flex; flex-direction: column; gap: 16px; }
+
+.km-card {
+    background: var(--km-card);
+    border: 1px solid var(--km-border);
+    border-radius: var(--km-radius);
+    padding: 16px 18px;
+}
+.km-card > h2 { margin: 0 0 12px; font-size: 15px; }
+.km-empty { text-align: center; padding: 32px 18px; }
+.km-placeholder { border-style: dashed; }
+.km-pad { padding: 8px 0; }
+
+.km-notice {
+    margin: 12px 24px 0;
+    padding: 10px 14px;
+    background: color-mix(in srgb, var(--km-primary) 8%, var(--km-card));
+    border: 1px solid color-mix(in srgb, var(--km-primary) 30%, var(--km-border));
+    border-radius: var(--km-radius);
+    font-size: 13px;
+}
+
+/* ---------------- 学科节 ---------------- */
+.km-subject-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+.km-subject-head h2 { margin: 0; font-size: 16px; }
+.km-spacer { flex: 1 1 auto; }
+
+/* ---------------- 表格 ---------------- */
+.km-table-wrap { overflow-x: auto; }
+.km-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.km-table th, .km-table td {
+    text-align: left;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--km-border);
+    vertical-align: top;
+}
+.km-table thead th {
+    color: var(--km-muted);
+    font-weight: 600;
+    font-size: 12px;
+    white-space: nowrap;
+}
+.km-table tbody tr:last-child td { border-bottom: none; }
+.km-th-key { width: 180px; color: var(--km-muted); }
+.km-col-ops { white-space: nowrap; text-align: right; }
+.km-nowrap { white-space: nowrap; }
+
+/* ---------------- 按钮 ---------------- */
+.km-btn {
+    display: inline-block;
+    padding: 6px 12px;
+    border: 1px solid var(--km-border);
+    border-radius: 8px;
+    background: var(--km-input);
+    color: var(--km-text);
+    font-size: 13px;
+    line-height: 1.2;
+    cursor: pointer;
+    text-decoration: none;
+}
+.km-btn:hover { border-color: var(--km-primary); color: var(--km-primary); text-decoration: none; }
+.km-btn:disabled { opacity: .55; cursor: not-allowed; }
+.km-btn-primary {
+    background: var(--km-primary);
+    border-color: var(--km-primary);
+    color: var(--km-primary-text);
+}
+.km-btn-primary:hover { color: var(--km-primary-text); filter: brightness(1.08); }
+.km-btn-danger { color: var(--km-danger); border-color: color-mix(in srgb, var(--km-danger) 45%, var(--km-border)); }
+.km-btn-danger:hover { background: var(--km-danger); color: #fff; border-color: var(--km-danger); }
+
+/* ---------------- 文本样式 ---------------- */
+.km-muted { color: var(--km-muted); }
+.km-small { font-size: 12px; }
+.km-warn { color: var(--km-warn); }
+.km-bad { color: var(--km-danger); }
+.km-ok { color: var(--km-ok); }
+.km-tag {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 999px;
+    border: 1px solid var(--km-border);
+    background: color-mix(in srgb, var(--km-border) 40%, transparent);
+    font-size: 11px;
+    color: var(--km-muted);
+}
+
+/* ---------------- 提示块 ---------------- */
+.km-alert {
+    border-radius: var(--km-radius);
+    padding: 10px 14px;
+    margin: 10px 0;
+    font-size: 13px;
+    border: 1px solid;
+}
+.km-alert p { margin: 0 0 6px; }
+.km-alert-warn {
+    border-color: color-mix(in srgb, var(--km-warn) 45%, var(--km-border));
+    background: color-mix(in srgb, var(--km-warn) 8%, var(--km-card));
+}
+.km-alert-info {
+    border-color: color-mix(in srgb, var(--km-primary) 35%, var(--km-border));
+    background: color-mix(in srgb, var(--km-primary) 6%, var(--km-card));
+}
+
+.km-list { margin: 4px 0 0; padding-left: 20px; }
+.km-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.km-chip {
+    padding: 3px 10px;
+    border: 1px solid var(--km-border);
+    border-radius: 999px;
+    font-size: 12px;
+    background: color-mix(in srgb, var(--km-border) 25%, transparent);
+}
+.km-details { margin-top: 10px; }
+.km-details summary { cursor: pointer; color: var(--km-muted); font-size: 13px; }
+
+/* ---------------- 题目预览 ---------------- */
+.km-preview {
+    border-top: 1px dashed var(--km-border);
+    padding: 12px 0;
+}
+.km-preview:first-of-type { border-top: none; padding-top: 0; }
+.km-preview-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 6px; }
+.km-shared-stem {
+    border-left: 3px solid var(--km-primary);
+    padding: 6px 10px;
+    margin: 6px 0;
+    background: color-mix(in srgb, var(--km-primary) 6%, var(--km-card));
+    border-radius: 0 8px 8px 0;
+    font-size: 13px;
+}
+.km-stem { margin: 6px 0; }
+.km-options { margin: 8px 0; padding-left: 0; list-style: none; }
+.km-options li { display: flex; gap: 8px; padding: 3px 0; }
+/* 选项标签：宽度自适应 —— 选项键不限于 A–E，可能是 AA / AB（Excel 式 26 进制） */
+.km-opt-key {
+    flex: 0 0 auto;
+    min-width: 22px;
+    padding: 0 6px;
+    text-align: center;
+    border: 1px solid var(--km-border);
+    border-radius: 999px;
+    font-size: 12px;
+    line-height: 20px;
+    color: var(--km-muted);
+    white-space: nowrap;
+}
+.km-opt-text { flex: 1 1 auto; }
+
+/* ---------------- 题库富文本容器（净化后的题干/解析） ---------------- */
+.kqb-rt img,
+.kqb-rt video,
+.kqb-rt audio { max-width: 100%; height: auto; }
+.kqb-rt img { border-radius: 6px; vertical-align: middle; }
+.kqb-rt table { border-collapse: collapse; max-width: 100%; }
+.kqb-rt td, .kqb-rt th { border: 1px solid var(--km-border); padding: 4px 8px; }
+.kqb-rt p { margin: 0 0 6px; }
+.kqb-rt .img_container { margin: 6px 0; }
+.kqb-rt blockquote {
+    margin: 6px 0;
+    padding-left: 10px;
+    border-left: 3px solid var(--km-border);
+    color: var(--km-muted);
+}
+.kqb-media-missing {
+    display: inline-block;
+    padding: 2px 8px;
+    border: 1px dashed var(--km-warn);
+    border-radius: 6px;
+    color: var(--km-warn);
+    font-size: 12px;
+}
+
+/* ---------------- 对话框 ---------------- */
+.km-dialog {
+    border: 1px solid var(--km-border);
+    border-radius: 14px;
+    padding: 0;
+    background: var(--km-card);
+    color: var(--km-text);
+    width: min(480px, calc(100vw - 32px));
+    box-shadow: 0 18px 48px rgba(0, 0, 0, .22);
+}
+.km-dialog-wide { width: min(640px, calc(100vw - 32px)); }
+.km-dialog::backdrop { background: rgba(0, 0, 0, .42); }
+.km-form { padding: 18px 20px; display: flex; flex-direction: column; gap: 12px; }
+.km-form h3 { margin: 0; font-size: 16px; }
+.km-form label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
+.km-form input[type="text"],
+.km-form select,
+.km-form input[type="file"] {
+    padding: 8px 10px;
+    border: 1px solid var(--km-border);
+    border-radius: 8px;
+    background: var(--km-input);
+    color: var(--km-text);
+    font-size: 13px;
+}
+.km-check { flex-direction: row !important; align-items: center; gap: 8px !important; }
+.km-dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 4px;
+}
+.km-inspect-result {
+    border: 1px solid var(--km-border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 12px;
+    max-height: 220px;
+    overflow: auto;
+    background: var(--km-input);
+}
+.km-inspect-result ul { margin: 6px 0 0; padding-left: 18px; }
+
+/* ---------------- Toast ---------------- */
+.km-toast {
+    position: fixed;
+    left: 50%;
+    bottom: 28px;
+    transform: translateX(-50%);
+    max-width: min(560px, calc(100vw - 32px));
+    padding: 10px 18px;
+    border-radius: 10px;
+    background: #111827;
+    color: #f9fafb;
+    font-size: 13px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, .3);
+    z-index: 9999;
+    word-break: break-word;
+}
+.km-toast.km-toast-err { background: #991b1b; }
+.km-toast.km-toast-ok { background: #14532d; }
+
+@media (max-width: 720px) {
+    .km-header, .km-stats, .km-main { padding-left: 12px; padding-right: 12px; }
+    .km-actions { margin-left: 0; width: 100%; }
+    .km-stat { flex-basis: calc(50% - 10px); }
+}
+
+/* =============================================================================
+   练习页（exam.html）
+   ============================================================================= */
+
+.km-exam .km-main { padding-bottom: 60px; }
+.km-hint { text-align: center; margin: 10px 0 0; }
+.km-btn-mini { padding: 2px 8px; font-size: 11px; }
+.km-loading { opacity: .6; pointer-events: none; }
+
+/* ---------------- 开始面板 ---------------- */
+.km-start h2 { margin-bottom: 6px; }
+.km-start-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+    gap: 20px;
+    margin-top: 14px;
+}
+.km-start-grid h3 { margin: 0 0 8px; font-size: 13px; color: var(--km-muted); }
+.km-chapter-pick { display: flex; flex-direction: column; gap: 6px; max-height: 280px; overflow: auto; padding-right: 4px; }
+.km-chapter-pick .km-sub { padding-left: 22px; }
+.km-order-pick { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+.km-start-actions { justify-content: flex-start; margin-top: 18px; }
+
+/* ---------------- 进度 ---------------- */
+.km-progress { margin-bottom: 12px; }
+.km-progress-bar {
+    display: flex;
+    gap: 2px;
+    height: 8px;
+    border-radius: 999px;
+    overflow: hidden;
+    background: color-mix(in srgb, var(--km-border) 60%, transparent);
+}
+.km-seg { flex: 1 1 auto; background: color-mix(in srgb, var(--km-border) 60%, transparent); transition: background .15s; }
+.km-seg-ok, .km-seg-correct { background: var(--km-ok); }
+.km-seg-wrong { background: var(--km-danger); }
+.km-seg-manual { background: var(--km-warn); }
+.km-seg-revealed { background: color-mix(in srgb, var(--km-primary) 55%, transparent); }
+.km-seg-cur { outline: 2px solid var(--km-text); outline-offset: 1px; }
+.km-progress-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--km-muted);
+}
+
+/* ---------------- 题卡 ---------------- */
+.km-question { padding: 18px 20px; }
+.km-q-meta { margin: 0 0 12px; font-size: 13px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.km-q-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px solid var(--km-border);
+}
+
+/* ---------------- 作答控件 ---------------- */
+.km-opts { display: flex; flex-direction: column; gap: 8px; }
+.km-opts-judge { flex-direction: row; gap: 12px; }
+.km-opt {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid var(--km-border);
+    border-radius: 10px;
+    background: var(--km-input);
+    cursor: pointer;
+    transition: border-color .12s, background .12s;
+}
+.km-opt:hover { border-color: var(--km-primary); }
+.km-opt input { margin-top: 3px; flex: 0 0 auto; }
+.km-opt-on {
+    border-color: var(--km-primary);
+    background: color-mix(in srgb, var(--km-primary) 10%, var(--km-input));
+}
+.km-opt-text { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+.km-opts-judge .km-opt { flex: 1 1 0; justify-content: center; }
+.km-gap { display: flex; flex-direction: column; gap: 8px; font-size: 13px; }
+.km-gap input, .km-gap textarea {
+    padding: 10px 12px;
+    border: 1px solid var(--km-border);
+    border-radius: 10px;
+    background: var(--km-input);
+    color: var(--km-text);
+    font-size: 14px;
+    font-family: inherit;
+    resize: vertical;
+}
+
+/* ---------------- 结果区 ---------------- */
+.km-result {
+    margin-top: 16px;
+    padding: 14px 16px;
+    border-radius: 10px;
+    border: 1px solid var(--km-border);
+    background: color-mix(in srgb, var(--km-border) 18%, var(--km-card));
+}
+.km-result-ok { border-color: color-mix(in srgb, var(--km-ok) 55%, var(--km-border)); background: color-mix(in srgb, var(--km-ok) 8%, var(--km-card)); }
+.km-result-bad { border-color: color-mix(in srgb, var(--km-danger) 55%, var(--km-border)); background: color-mix(in srgb, var(--km-danger) 7%, var(--km-card)); }
+.km-result-manual { border-color: color-mix(in srgb, var(--km-warn) 55%, var(--km-border)); background: color-mix(in srgb, var(--km-warn) 8%, var(--km-card)); }
+.km-result-seen { border-color: color-mix(in srgb, var(--km-primary) 40%, var(--km-border)); }
+.km-result-head { font-weight: 700; margin-bottom: 8px; }
+.km-correct { color: var(--km-ok); }
+.km-wrong { color: var(--km-danger); }
+.km-manual { color: var(--km-warn); }
+.km-revealed { color: var(--km-primary); }
+.km-result-row { display: flex; gap: 10px; margin: 4px 0; font-size: 13px; }
+.km-result-k {
+    flex: 0 0 68px;
+    color: var(--km-muted);
+    font-size: 12px;
+    padding-top: 2px;
+}
+.km-result-ok-text { color: var(--km-ok); font-weight: 600; }
+.km-analysis { margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--km-border); font-size: 13px; }
+.km-analysis > .km-result-k { display: block; margin-bottom: 4px; }
+.km-self-assess { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 12px; }
+
+/* ---------------- 抽屉（答题卡 / 汇总） ---------------- */
+.km-drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: min(420px, 92vw);
+    overflow: auto;
+    background: var(--km-card);
+    border-left: 1px solid var(--km-border);
+    box-shadow: -12px 0 32px rgba(0, 0, 0, .18);
+    padding: 16px 18px 40px;
+    z-index: 900;
+}
+.km-drawer-wide { width: min(680px, 96vw); }
+.km-drawer-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+.km-drawer-head h2 { margin: 0; font-size: 16px; }
+.km-drawer h3 { font-size: 13px; color: var(--km-muted); margin: 16px 0 8px; }
+.km-legend { display: flex; flex-wrap: wrap; gap: 10px; font-size: 12px; color: var(--km-muted); margin-bottom: 12px; }
+.km-legend-item { display: inline-flex; align-items: center; gap: 5px; }
+.km-dot { width: 10px; height: 10px; border-radius: 3px; display: inline-block; border: 1px solid var(--km-border); }
+.km-dot-none { background: color-mix(in srgb, var(--km-border) 55%, transparent); }
+.km-dot-ok { background: var(--km-ok); border-color: var(--km-ok); }
+.km-dot-bad { background: var(--km-danger); border-color: var(--km-danger); }
+.km-dot-seen { background: color-mix(in srgb, var(--km-primary) 60%, transparent); border-color: var(--km-primary); }
+.km-dot-manual { background: var(--km-warn); border-color: var(--km-warn); }
+.km-sheet-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(44px, 1fr)); gap: 6px; }
+.km-sheet-cell {
+    padding: 8px 0;
+    border: 1px solid var(--km-border);
+    border-radius: 8px;
+    background: var(--km-input);
+    color: var(--km-text);
+    font-size: 12px;
+    cursor: pointer;
+}
+.km-sheet-cell:hover { border-color: var(--km-primary); }
+.km-sheet-cell.km-dot-ok { background: var(--km-ok); color: #fff; border-color: var(--km-ok); }
+.km-sheet-cell.km-dot-bad { background: var(--km-danger); color: #fff; border-color: var(--km-danger); }
+.km-sheet-cell.km-dot-manual { background: var(--km-warn); color: #fff; border-color: var(--km-warn); }
+.km-sheet-cell.km-dot-seen { background: color-mix(in srgb, var(--km-primary) 60%, transparent); color: #fff; border-color: var(--km-primary); }
+.km-sheet-cur { outline: 2px solid var(--km-text); outline-offset: 1px; }
+.km-stats-drawer { padding: 0 0 6px; }
+.km-stats-drawer .km-stat { flex: 1 1 88px; min-width: 84px; padding: 8px 10px; }
+.km-stats-drawer .km-stat b { font-size: 17px; }
+
+/* ---------------- 设置页 ---------------- */
+.km-stats-inline { padding: 0 0 12px; }
+.km-actions-left { justify-content: flex-start; }
+.km-save-bar {
+    justify-content: flex-start;
+    align-items: center;
+    gap: 12px;
+    padding: 4px 2px;
+}
+.km-form-grid { gap: 12px; }
+.km-form-grid input[type="password"],
+.km-form-grid input[type="text"],
+.km-form-grid input[type="number"] {
+    padding: 8px 10px;
+    border: 1px solid var(--km-border);
+    border-radius: 8px;
+    background: var(--km-input);
+    color: var(--km-text);
+    font-size: 13px;
+    font-family: inherit;
+}
+
+/* ---------------- AI 评卷结果块 ---------------- */
+.km-ai-block {
+    margin-top: 12px;
+    padding: 10px 12px;
+    border: 1px solid color-mix(in srgb, var(--km-primary) 35%, var(--km-border));
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--km-primary) 5%, var(--km-card));
+}
+.km-ai-head { font-size: 13px; margin-bottom: 4px; }
+.km-ai-comment { font-size: 13px; margin-bottom: 6px; }
+.km-ai-block .km-self-assess { margin-top: 6px; }
+
+@media (max-width: 720px) {
+    .km-start-grid { grid-template-columns: 1fr; gap: 14px; }
+    .km-opts-judge { flex-direction: column; }
+    .km-result-k { flex-basis: 60px; }
+}
