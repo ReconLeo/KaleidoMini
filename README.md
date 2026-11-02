@@ -2,8 +2,9 @@
 
 [![version](https://img.shields.io/badge/version-0.3.0-blue)](CHANGELOG.md)
 [![framework](https://img.shields.io/badge/FlaskToolkit-%E2%89%A5%204.21.0-green)](https://github.com/ReconLeo/FlaskToolkit)
-[![tests](https://img.shields.io/badge/tests-198%20e2e%20%2B%208%20unit%20suites-brightgreen)](tests/)
+[![tests](https://img.shields.io/badge/tests-197%20e2e%20%2B%208%20unit%20suites-brightgreen)](tests/)
 [![python](https://img.shields.io/badge/python-3.10%2B-yellow)](https://www.python.org/)
+[![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
 FlaskToolkit 子项目插件：**Kaleido Mini** —— 只读题库 → 练习模式自测工具。
 
@@ -54,9 +55,13 @@ python <FlaskToolkit>/tools/install_plugin.py install-backend kaleido_mini-0.3.0
 
 **M6 已完成**：发布收尾（版本号、变更历史、徽章、全量回归、打包、建仓发布）。
 
-全部里程碑完成。端到端 **198 项**、单元 **8 个测试文件**全绿。
+全部里程碑完成。端到端 **197 项**、单元 **8 个测试文件**全绿。
 详细版本演进见 [CHANGELOG.md](CHANGELOG.md)，开发中发现的框架缺陷见
 [docs/框架协调清单.md](docs/框架协调清单.md)。
+
+## 许可
+
+[MIT](LICENSE)
 
 ## AI 评卷（可选）
 

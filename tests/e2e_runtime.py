@@ -813,8 +813,11 @@ def main():
     check("设置页含 AI 配置区块", "DeepSeek 智能评卷" in r.text)
     check("设置页引用了 km_settings.js",
           "/plugin-static/kaleido_mini/js/km_settings.js" in r.text)
-    check("设置页不含明文 key（仅掩码占位）",
-          "sk-" not in r.text or "****" in r.text)
+    # 不得出现「完整形态」的 key（占位提示 sk-… 与掩码 sk-****abcd 都不算）
+    import re as _re2
+    check("设置页不含完整 key（仅占位/掩码）",
+          not _re2.search(r"sk-[A-Za-z0-9_\-]{16,}", r.text),
+          str(_re2.findall(r"sk-[A-Za-z0-9_\-]{8,}", r.text)[:2]))
     r = user.get(PLUGIN_PAGE + "/settings")
     check("设置页（普通用户）403", r.status_code == 403, f"HTTP {r.status_code}")
     st, _ = user.api_json("GET", PLUGIN_API + "/settings")
